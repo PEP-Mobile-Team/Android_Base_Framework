@@ -5,7 +5,7 @@ afterEvaluate {
         publications {
             release(MavenPublication){
                 from components.release
-
+                //以下配置不能打开。打开会出现集合包打不出aar包
 //                group = "com.pep"
 //                artifactId = PROJ_ARTIFACTID
 //                version = "1.0"

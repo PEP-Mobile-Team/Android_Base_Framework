@@ -35,7 +35,6 @@ import static com.pep.core.libnet.PEPHttpCoinfig.IS_DEBUG;
 public class PEPHttpManager {
 
     private Retrofit retrofit;
-    OkHttpClient mOkHttpClient = null;
 
     private PEPHttpManager() {
     }
@@ -102,6 +101,39 @@ public class PEPHttpManager {
         retrofit = retrofitBuilder.build();
     }
 
+    /**
+     * 初始化
+     * @param baseUrl 基础url
+     * @param okHttpClient debug版用来测试的Client
+     * @throws RuntimeException exception
+     */
+    public void init(String baseUrl,OkHttpClient okHttpClient) throws RuntimeException {
+        if (TextUtils.isEmpty(baseUrl)) {
+            throw new RuntimeException("baseUrl is null");
+        }
+        PEPHttpCoinfig.BASE_URL = baseUrl;
+        OkHttpClient.Builder builder = okHttpClient.newBuilder().connectTimeout(10, TimeUnit.SECONDS)
+                .readTimeout(10, TimeUnit.SECONDS)
+                .writeTimeout(10, TimeUnit.SECONDS);
+        if (IS_DEBUG) {
+            // Log Interceptor print
+            HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor();
+
+            //Log pring level
+            loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+
+            addInterceptor(loggingInterceptor);
+        }
+
+        // set interceptors in okhttp builder
+        setInterceptors(builder);
+
+        OkHttpClient client = builder.build();
+        Retrofit.Builder retrofitBuilder = new Retrofit.Builder().baseUrl(BASE_URL).client(client);
+        setConverterFactorys(retrofitBuilder);
+        retrofit = retrofitBuilder.build();
+    }
+
     private void setInterceptors(OkHttpClient.Builder builder) {
 
         for (int i = 0; i < interceptors.size(); i++) {
@@ -119,6 +151,7 @@ public class PEPHttpManager {
     }
 
     public OkHttpClient getOkHttpClient() {
+        OkHttpClient mOkHttpClient = null;
         try {
             if (mOkHttpClient == null){
                 OkHttpClient.Builder builder = new OkHttpClient.Builder();
@@ -128,16 +161,6 @@ public class PEPHttpManager {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-    }
-
-    /**
-     * 设置可以抓包的OkHttpClient
-     * @param okHttpClient OkHttpClient
-     * @return PEPHttpManager
-     */
-    public PEPHttpManager setOkHttpClientTest(OkHttpClient okHttpClient){
-        this.mOkHttpClient = okHttpClient;
-        return this;
     }
 
     /**
